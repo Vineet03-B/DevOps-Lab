@@ -1,0 +1,37 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Pre-check Docker') {
+            steps {
+                sh 'docker --version'
+                sh 'docker info'
+            }
+        }
+
+        stage('Validate Project Files') {
+            steps {
+                sh '''test -f delivery_metrics.py
+test -f requirements.txt
+test -f prometheus.yml
+test -f alert_rules.yml
+'''
+            }
+        }
+
+        stage('Build Delivery Metrics Image') {
+            steps {
+                sh 'docker build -t delivery-metrics:${BUILD_NUMBER} .'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Delivery monitoring image built successfully.'
+        }
+        failure {
+            echo 'Delivery monitoring pipeline failed. Check the console output.'
+        }
+    }
+}
